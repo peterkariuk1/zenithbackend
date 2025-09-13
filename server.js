@@ -5,7 +5,7 @@ import cors from "cors";
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "https://zenithfrontend.vercel.app", credentials: true }));
+app.use(cors({ origin: "https://zenithfrontend.vercel.app" }));
 
 
 const FUSION_URL = "https://intl.fusionsolar.huawei.com/thirdData";
@@ -44,7 +44,8 @@ app.post("/login", async (req, res) => {
         };
 
         // ✅ Send token back to frontend
-        res.json({ success: true, token: xsrfToken });
+        const data = res.json({ success: true, token: xsrfToken });
+        console.log("Login response:", data);
     } catch (err) {
         console.error("Fusion login error:", err.response?.data || err.message);
         res.status(401).json({ success: false, error: "Login failed" });
