@@ -5,7 +5,7 @@ import cors from "cors";
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: ["http://localhost:8080", "https://zenithfrontend.vercel.app/"], credentials: true }));
+app.use(cors({ origin: "https://zenithfrontend.vercel.app", credentials: true }));
 
 
 const FUSION_URL = "https://intl.fusionsolar.huawei.com/thirdData";
