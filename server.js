@@ -5,7 +5,7 @@ import cors from "cors";
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:8080" }));
+app.use(cors({ origin: "http://localhost:8080", credentials: true }));
 
 
 const FUSION_URL = "https://intl.fusionsolar.huawei.com/thirdData";
@@ -81,29 +81,29 @@ app.get("/plants/:username", async (req, res) => {
 // fetch realtime KPI for plants
 // fetch realtime KPI for one or more plants
 app.get("/plant-data/:username/:stationCodes", async (req, res) => {
-  const session = sessions[req.params.username];
-  if (!session) return res.status(401).json({ error: "Not logged in" });
+    const session = sessions[req.params.username];
+    if (!session) return res.status(401).json({ error: "Not logged in" });
 
-  try {
-    const response = await axios.post(
-      `${FUSION_URL}/getStationRealKpi`,
-      { stationCodes: req.params.stationCodes }, // e.g. "NE=51186913,NE=511907913"
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: session.cookies.join("; "),
-          "XSRF-TOKEN": session.xsrf,
-        },
-      }
-    );
+    try {
+        const response = await axios.post(
+            `${FUSION_URL}/getStationRealKpi`,
+            { stationCodes: req.params.stationCodes }, // e.g. "NE=51186913,NE=511907913"
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    Cookie: session.cookies.join("; "),
+                    "XSRF-TOKEN": session.xsrf,
+                },
+            }
+        );
 
-    res.json(response.data);
-    console.log(response.data);
-    
-  } catch (err) {
-    console.error("Error fetching plant data:", err.response?.data || err.message);
-    res.status(500).json({ error: "Failed to fetch plant data" });
-  }
+        res.json(response.data);
+        console.log(response.data);
+
+    } catch (err) {
+        console.error("Error fetching plant data:", err.response?.data || err.message);
+        res.status(500).json({ error: "Failed to fetch plant data" });
+    }
 });
 
 
