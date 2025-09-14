@@ -3,6 +3,7 @@ import axios from "axios";
 import https from "https";
 import dns from "dns";
 import cors from "cors";
+import { lookup } from "dns/promises"; // 👈 added
 
 const app = express();
 app.use(express.json());
@@ -12,10 +13,12 @@ app.use(cors({ origin: "https://zenithfrontend.vercel.app", credentials: true })
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 const FUSION_HOST = "intl.fusionsolar.huawei.com";
-const FUSION_URL = `https://${FUSION_HOST}/thirdData`;
-const FUSION_IP = "119.8.160.213"; // 👉 replace with current IP
 
-const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+// Force HTTPS agent with SNI
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+  servername: FUSION_HOST, // 👈 important for TLS handshake
+});
 
 const fusionAxios = axios.create({
   httpsAgent,
@@ -27,29 +30,25 @@ const fusionAxios = axios.create({
 async function fusionPost(path, data = {}, session = null) {
   const headers = {
     "Content-Type": "application/json",
-    Host: FUSION_HOST,
+    Host: FUSION_HOST, // 👈 ensures Huawei accepts the request
   };
 
   if (session) {
     headers.Cookie = session.cookies.join("; ");
-    headers["xsrf-token"] = session.xsrf; // 👈 lowercase
+    headers["xsrf-token"] = session.xsrf;
   }
 
   try {
+    // Resolve IP manually each call (bypasses Render DNS)
+    const { address } = await lookup(FUSION_HOST);
+
     return await fusionAxios.post(
-      `${FUSION_URL}${path}`,
-      JSON.stringify(data), // 👈 always stringify
+      `https://${address}/thirdData${path}`, // 👈 call resolved IP
+      JSON.stringify(data),
       { headers }
     );
   } catch (err) {
-    if (err.code === "ENOTFOUND") {
-      console.warn("⚠️ DNS failed, retrying with fallback IP...");
-      return await fusionAxios.post(
-        `https://${FUSION_IP}/thirdData${path}`,
-        JSON.stringify(data),
-        { headers }
-      );
-    }
+    console.error("Fusion request failed:", err.response?.data || err.message);
     throw err;
   }
 }
