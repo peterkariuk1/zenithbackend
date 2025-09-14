@@ -12,12 +12,13 @@ app.use(cors({ origin: "https://zenithfrontend.vercel.app", credentials: true })
 // -------------------- DNS + FUSION CONFIG --------------------
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
+// Replace with the current Huawei IP (can change occasionally)
+const FUSION_IP = "119.8.160.213"; 
 const FUSION_HOST = "intl.fusionsolar.huawei.com";
 
-// Force HTTPS agent with SNI
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false,
-  servername: FUSION_HOST, // 👈 important for TLS handshake
+  servername: FUSION_HOST, // 👈 ensures TLS cert matches the hostname
 });
 
 const fusionAxios = axios.create({
@@ -25,6 +26,30 @@ const fusionAxios = axios.create({
   timeout: 10000,
   withCredentials: true,
 });
+
+async function fusionPost(path, data = {}, session = null) {
+  const headers = {
+    "Content-Type": "application/json",
+    Host: FUSION_HOST, // 👈 critical for Huawei API
+  };
+
+  if (session) {
+    headers.Cookie = session.cookies.join("; ");
+    headers["xsrf-token"] = session.xsrf;
+  }
+
+  try {
+    return await fusionAxios.post(
+      `https://${FUSION_IP}/thirdData${path}`, // 👈 call Huawei via IP
+      JSON.stringify(data),
+      { headers }
+    );
+  } catch (err) {
+    console.error("Fusion request failed:", err.response?.data || err.message);
+    throw err;
+  }
+}
+
 
 // -------------------- UNIVERSAL POST WRAPPER --------------------
 async function fusionPost(path, data = {}, session = null) {
