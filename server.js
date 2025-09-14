@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: "https://zenithfrontend.vercel.app", credentials: true }));
 
-// -------------------- DNS + FUSION CONFIG --------------------
+// -------------------- DNS + FUSION CONFIG ----------------
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 // Replace with the current Huawei IP (can change occasionally)
