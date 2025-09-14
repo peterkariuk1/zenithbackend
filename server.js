@@ -51,33 +51,6 @@ async function fusionPost(path, data = {}, session = null) {
 }
 
 
-// -------------------- UNIVERSAL POST WRAPPER --------------------
-async function fusionPost(path, data = {}, session = null) {
-  const headers = {
-    "Content-Type": "application/json",
-    Host: FUSION_HOST, // 👈 ensures Huawei accepts the request
-  };
-
-  if (session) {
-    headers.Cookie = session.cookies.join("; ");
-    headers["xsrf-token"] = session.xsrf;
-  }
-
-  try {
-    // Resolve IP manually each call (bypasses Render DNS)
-    const { address } = await lookup(FUSION_HOST);
-
-    return await fusionAxios.post(
-      `https://${address}/thirdData${path}`, // 👈 call resolved IP
-      JSON.stringify(data),
-      { headers }
-    );
-  } catch (err) {
-    console.error("Fusion request failed:", err.response?.data || err.message);
-    throw err;
-  }
-}
-
 // -------------------- SESSION STORE --------------------
 let sessions = {};
 
